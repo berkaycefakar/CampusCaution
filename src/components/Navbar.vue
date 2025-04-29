@@ -1,12 +1,10 @@
 <template>
-  <nav class="bg-gradient-to-r from-blue-600 to-indigo-700 shadow-lg">
+  <nav class="bg-blue-600 shadow-lg">
     <div class="container mx-auto px-4">
       <div class="flex justify-between items-center h-16">
         <div class="flex items-center space-x-3">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
-          </svg>
-          <span class="text-white text-xl font-bold">Kampüs Yönetim Paneli</span>
+          <img src="../assets/akdeniz.png" alt="Akdeniz Üniversitesi Logo" class="h-12 w-auto ">
+          <span class="text-white text-xl font-bold">Kampüs Sorun Takip Sistemi</span>
         </div>
         <div class="flex items-center space-x-4">
           <div class="relative">
@@ -16,8 +14,29 @@
               </svg>
             </button>
           </div>
-          <div class="w-10 h-10 rounded-full bg-white bg-opacity-20 flex items-center justify-center text-white font-bold">
-            AY
+          <div class="relative">
+            <button @click="toggleDropdown" class="flex items-center space-x-2 focus:outline-none">
+              <div class="w-10 h-10 rounded-full bg-white bg-opacity-20 flex items-center justify-center text-white font-bold">
+                {{ userInitials }}
+              </div>
+              <div class="text-white text-left">
+                <p class="text-sm font-medium">{{ userName }}</p>
+                <p class="text-xs opacity-80">{{ userRole }}</p>
+              </div>
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-white" :class="{ 'transform rotate-180': isDropdownOpen }" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
+            
+            <!-- Dropdown Menu -->
+            <div v-if="isDropdownOpen" class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50">
+              <button @click="handleLogout" class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                </svg>
+                Çıkış Yap
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -26,7 +45,59 @@
 </template>
 
 <script>
+import { mapActions } from 'vuex'
+
 export default {
-  name: 'TopNavbar'
+  name: 'TopNavbar',
+  data() {
+    return {
+      isDropdownOpen: false
+    }
+  },
+  computed: {
+    userName() {
+      const user = JSON.parse(localStorage.getItem('user') || '{}')
+      return user.name || 'Kullanıcı'
+    },
+    userInitials() {
+      return this.userName.split(' ').map(n => n[0]).join('').toUpperCase()
+    },
+    userRole() {
+      const user = JSON.parse(localStorage.getItem('user') || '{}')
+      const roles = {
+        'STUDENT': 'Öğrenci',
+        'STAFF': 'Personel',
+        'ADMIN': 'Yönetici'
+      }
+      return roles[user.role] || 'Kullanıcı'
+    }
+  },
+  methods: {
+    ...mapActions(['logout']),
+    toggleDropdown() {
+      this.isDropdownOpen = !this.isDropdownOpen
+    },
+    handleLogout() {
+      this.logout()
+      this.$router.push('/login')
+      this.isDropdownOpen = false
+    }
+  },
+  mounted() {
+    // Dropdown dışına tıklandığında kapat
+    document.addEventListener('click', (e) => {
+      if (!this.$el.contains(e.target)) {
+        this.isDropdownOpen = false
+      }
+    })
+  },
+  beforeUnmount() {
+    // Event listener'ı temizle
+    document.removeEventListener('click', (e) => {
+      if (!this.$el.contains(e.target)) {
+        this.isDropdownOpen = false
+      }
+    })
+  }
 }
 </script>

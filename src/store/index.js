@@ -1,4 +1,5 @@
 import { createStore } from 'vuex'
+import AuthService from '../services/auth.service'
 
 // Kampüs sınırları içinde rastgele nokta üreten yardımcı fonksiyon
 function getRandomInRange(from, to) {
@@ -72,7 +73,10 @@ export default createStore({
         createdAt: '2024-12-24 11:15'
       }
     ],
-    selectedIssue: null
+    selectedIssue: null,
+    isAuthenticated: !!localStorage.getItem('token'),
+    user: JSON.parse(localStorage.getItem('user') || '{}'),
+    loginError: null
   },
   mutations: {
     setSelectedIssue(state, issue) {
@@ -89,6 +93,22 @@ export default createStore({
       if (state.selectedIssue?.id === id) {
         state.selectedIssue = null;
       }
+    },
+    loginSuccess(state, user) {
+      state.isAuthenticated = true;
+      state.user = user;
+      state.loginError = null;
+    },
+    loginFailure(state, error) {
+      state.isAuthenticated = false;
+      state.user = null;
+      state.loginError = error;
+    },
+    logout(state) {
+      state.isAuthenticated = false;
+      state.user = null;
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
     }
   },
   actions: {
@@ -100,10 +120,37 @@ export default createStore({
     },
     deleteIssue({ commit }, id) {
       commit('deleteIssue', id);
+    },
+    async login({ commit }, { username, password }) {
+      try {
+        const response = await AuthService.login(username, password);
+        commit('loginSuccess', response.user);
+        return Promise.resolve(response);
+      } catch (error) {
+        commit('loginFailure', error.response?.data?.message || 'Login failed');
+        return Promise.reject(error);
+      }
+    },
+    async register({ commit }, { username, email, password }) {
+      try {
+        const response = await AuthService.register(username, email, password);
+        commit('loginSuccess', response.data.user);
+        return Promise.resolve(response.data);
+      } catch (error) {
+        commit('loginFailure', error.response?.data?.message || 'Registration failed');
+        return Promise.reject(error);
+      }
+    },
+    logout({ commit }) {
+      AuthService.logout();
+      commit('logout');
     }
   },
   getters: {
     getIssues: state => state.issues,
-    getSelectedIssue: state => state.selectedIssue
+    getSelectedIssue: state => state.selectedIssue,
+    isAuthenticated: state => state.isAuthenticated,
+    currentUser: state => state.user,
+    loginError: state => state.loginError
   }
 })
