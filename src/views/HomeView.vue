@@ -7,7 +7,7 @@
     >
       <div class="sticky top-0 bg-white z-10 p-4 border-b">
         <div class="flex items-center justify-between mb-4">
-          <h2 class="text-xl font-bold text-gray-800">Sorunlar</h2>
+          <h2 class="text-xl font-bold text-gray-800">{{$t('issues')}}</h2>
           <button @click="toggleMenu" class="p-2 hover:bg-gray-100 rounded-lg transition-all duration-200">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7" />
@@ -17,25 +17,36 @@
         <div class="relative">
           <input 
             type="text" 
-            placeholder="Sorun ara..."
+            v-model="searchQuery"
+            :placeholder="$t('searchPlaceholder')"
             class="w-full px-4 py-2 bg-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200"
           >
           <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400 absolute right-3 top-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
           </svg>
         </div>
-        <button @click="sortIssues" class="mt-2 bg-blue-600 text-white px-4 py-2 rounded-lg">Acil Duruma Göre Sırala</button>
+        <button @click="sortIssues" class="mt-2 bg-blue-600 text-white px-4 py-2 rounded-lg">{{$t('sortByUrgency')}}</button>
       </div>
       <div class="divide-y">
         <div
           v-for="issue in sortedIssues"
           :key="issue.id"
           @click="selectIssue(issue)"
-          class="p-4 hover:bg-gray-50 cursor-pointer transition-all duration-200"
-          :class="{'bg-blue-50 border-l-4 border-blue-500': selectedIssue?.id === issue.id}"
+          class="p-4 hover:bg-gray-50 cursor-pointer transition-all duration-200 relative"
+          :class="{
+            'bg-blue-50 border-l-4 border-blue-500': selectedIssue?.id === issue.id,
+            'bg-green-50 opacity-75': issue.status === 'Çözüldü'
+          }"
         >
+          <!-- Çözüldü İşareti -->
+          <div v-if="issue.status === 'Çözüldü'" class="absolute top-2 right-2 bg-green-500 rounded-full p-1">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+            </svg>
+          </div>
+
           <div class="flex justify-between items-start">
-            <h3 class="font-semibold text-gray-800">{{ issue.title }}</h3>
+            <h3 class="font-semibold text-gray-800" :class="{'line-through': issue.status === 'Çözüldü'}">{{ issue.title }}</h3>
             <span 
               class="px-2 py-1 text-xs rounded-full font-medium"
               :class="{
@@ -47,15 +58,15 @@
               {{ issue.priority }}
             </span>
           </div>
-          <p class="text-sm text-gray-600 mt-1 line-clamp-2">{{ issue.description }}</p>
+          <p class="text-sm text-gray-600 mt-1 line-clamp-2" :class="{'line-through': issue.status === 'Çözüldü'}">{{ issue.description }}</p>
           <div class="flex justify-between items-center mt-2 text-xs text-gray-500">
             <span class="flex items-center space-x-1">
               <span class="w-2 h-2 rounded-full" :class="{
-                'bg-green-500': issue.status === 'Açık',
+                'bg-red-500': issue.status === 'Açık',
                 'bg-yellow-500': issue.status === 'İncelemede',
-                'bg-blue-500': issue.status === 'Çözüldü'
+                'bg-green-500': issue.status === 'Çözüldü'
               }"></span>
-              <span>{{ issue.status }}</span>
+              <span :class="{'text-green-600 font-medium': issue.status === 'Çözüldü'}">{{ issue.status }}</span>
             </span>
             <span>{{ issue.createdAt }}</span>
           </div>
@@ -67,7 +78,7 @@
     <div 
       class="transition-all duration-300 ease-in-out relative"
       :class="[menuOpen ? 'w-full' : 'w-2/3']"
-      style="min-height: calc(100vh - 64px);"
+      :style="menuOpen ? 'min-height: calc(100vh - 64px); width: 100vw; left: 0; right: 0; position: fixed; z-index: 40;' : 'min-height: calc(100vh - 64px);'"
     >
       <button 
         v-if="menuOpen" 
@@ -78,7 +89,7 @@
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7" />
         </svg>
       </button>
-      <MapView />
+      <MapView ref="mapView" />
     </div>
   </div>
 
@@ -94,9 +105,9 @@
               <span class="text-gray-300">•</span>
               <span class="flex items-center space-x-1">
                 <span class="w-2 h-2 rounded-full" :class="{
-                  'bg-green-500': selectedIssue.status === 'Açık',
+                  'bg-red-500': selectedIssue.status === 'Açık',
                   'bg-yellow-500': selectedIssue.status === 'İncelemede',
-                  'bg-blue-500': selectedIssue.status === 'Çözüldü'
+                  'bg-green-500': selectedIssue.status === 'Çözüldü'
                 }"></span>
                 <span class="text-sm text-gray-600">{{ selectedIssue.status }}</span>
               </span>
@@ -129,25 +140,75 @@
           <!-- Detaylar -->
           <div class="space-y-4">
             <div>
-              <h3 class="text-lg font-semibold text-gray-800 mb-2">Açıklama</h3>
+              <h3 class="text-lg font-semibold text-gray-800 mb-2">{{$t('description')}}</h3>
               <p class="text-gray-700">{{ selectedIssue.description }}</p>
             </div>
 
             <div>
-              <h3 class="text-lg font-semibold text-gray-800 mb-2">Konum</h3>
+              <h3 class="text-lg font-semibold text-gray-800 mb-2">{{$t('location')}}</h3>
               <p class="text-gray-700">
-                Enlem: {{ selectedIssue.location[0] }}<br>
-                Boylam: {{ selectedIssue.location[1] }}
+                {{$t('latitude')}}: {{ selectedIssue.location[0] }}<br>
+                {{$t('longitude')}}: {{ selectedIssue.location[1] }}
               </p>
             </div>
 
             <div class="flex space-x-4">
-              <button @click="updateStatus('Çözüldü')" class="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors duration-200">
-                Çözüldü Olarak İşaretle
+              <button @click="updateStatus('Çözüldü')" class="flex-1 bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition-colors duration-200">
+                {{$t('markResolved')}}
+              </button>
+              <button @click="updateStatus('İncelemede')" class="flex-1 bg-yellow-600 text-white py-2 px-4 rounded-lg hover:bg-yellow-700 transition-colors duration-200">
+                {{$t('markInProgress')}}
               </button>
               <button @click="deleteIssue" class="flex-1 bg-red-600 text-white py-2 px-4 rounded-lg hover:bg-red-700 transition-colors duration-200">
-                Sorunu Sil
+                {{$t('deleteIssue')}}
               </button>
+            </div>
+          </div>
+
+          <!-- Durum Aşamaları -->
+          <div class="mt-4 flex items-center justify-between w-full bg-gray-100 rounded-lg p-4">
+            <div class="flex flex-col items-center">
+              <div class="w-8 h-8 rounded-full flex items-center justify-center" :class="{
+                'bg-red-500 text-white': selectedIssue.status === 'Açık',
+                'bg-gray-300 text-gray-600': selectedIssue.status !== 'Açık'
+              }">
+                <span class="text-sm">1</span>
+              </div>
+              <span class="text-xs mt-1">{{$t('open')}}</span>
+            </div>
+            <!-- Açık -> İncelemede arası -->
+            <div class="h-1 flex-1 mx-2 bg-gray-300 relative overflow-hidden">
+              <div
+                v-if="selectedIssue.status === 'İncelemede' || selectedIssue.status === 'Çözüldü'"
+                class="h-full bg-blue-500 absolute left-0 top-0"
+                style="width: 100%;"
+              ></div>
+            </div>
+            <div class="flex flex-col items-center">
+              <div class="w-8 h-8 rounded-full flex items-center justify-center" :class="{
+                'bg-yellow-500 text-white': selectedIssue.status === 'İncelemede',
+                'bg-gray-300 text-gray-600': selectedIssue.status !== 'İncelemede'
+              }">
+                <span class="text-sm">2</span>
+              </div>
+              <span class="text-xs mt-1">{{$t('inProgress')}}</span>
+            </div>
+            <!-- İncelemede -> Çözüldü arası -->
+            <div class="h-1 flex-1 mx-2 bg-gray-300 relative overflow-hidden">
+              <div
+                v-if="selectedIssue.status === 'Çözüldü'"
+                class="h-full bg-blue-500 absolute left-0 top-0"
+                style="width: 100%;"
+              ></div>
+            </div>
+            <div class="flex flex-col items-center">
+              <div class="w-8 h-8 rounded-full flex items-center justify-center" :class="{
+                'bg-green-500 text-white': selectedIssue.status === 'Çözüldü',
+                'bg-gray-300 text-gray-600': selectedIssue.status !== 'Çözüldü'
+              }">
+                <span class="text-sm">3</span>
+              </div>
+              <span class="text-xs mt-1">{{$t('resolved')}}</span>
             </div>
           </div>
         </div>
@@ -167,7 +228,8 @@ export default {
   },
   data() {
     return {
-      menuOpen: false
+      menuOpen: false,
+      searchQuery: ''
     }
   },
   computed: {
@@ -175,11 +237,29 @@ export default {
       issues: 'getIssues',
       selectedIssue: 'getSelectedIssue'
     }),
+    filteredIssues() {
+      if (!this.searchQuery) return this.issues;
+      const q = this.searchQuery.toLowerCase();
+      return this.issues.filter(issue =>
+        issue.title.toLowerCase().includes(q) ||
+        issue.description.toLowerCase().includes(q)
+      );
+    },
     sortedIssues() {
-      return this.issues.slice().sort((a, b) => {
-        const priorityOrder = { 'Acil': 1, 'Yüksek': 2, 'Orta': 3 };
-        return priorityOrder[a.priority] - priorityOrder[b.priority];
-      });
+      // Çözüldü olanlar en sonda
+      const unresolved = this.filteredIssues.filter(i => i.status !== 'Çözüldü');
+      const resolved = this.filteredIssues.filter(i => i.status === 'Çözüldü');
+      const priorityOrder = { 'Acil': 1, 'Yüksek': 2, 'Orta': 3 };
+      unresolved.sort((a, b) => priorityOrder[a.priority] - priorityOrder[b.priority]);
+      return [...unresolved, ...resolved];
+    },
+    statusProgress() {
+      const statusMap = {
+        'Açık': 0,
+        'İncelemede': 50,
+        'Çözüldü': 100
+      }
+      return statusMap[this.selectedIssue?.status] || 0
     }
   },
   methods: {
@@ -191,14 +271,25 @@ export default {
       this.selectIssue(null);
     },
     updateStatus(status) {
-      this.updateIssueStatus({ id: this.selectedIssue.id, status });
-      this.closeModal();
+      if (confirm(`Bu sorunu "${status}" durumuna güncellemek istediğinizden emin misiniz?`)) {
+        this.updateIssueStatus({ id: this.selectedIssue.id, status });
+        this.closeModal();
+      }
     },
     deleteIssue() {
       if (confirm('Bu sorunu silmek istediğinizden emin misiniz?')) {
         this.deleteIssue(this.selectedIssue.id);
         this.closeModal();
       }
+    }
+  },
+  watch: {
+    menuOpen() {
+      this.$nextTick(() => {
+        if (this.$refs.mapView && this.$refs.mapView.$refs.map && this.$refs.mapView.$refs.map.leafletObject) {
+          this.$refs.mapView.$refs.map.leafletObject.invalidateSize();
+        }
+      });
     }
   }
 }

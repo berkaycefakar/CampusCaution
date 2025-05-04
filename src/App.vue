@@ -1,17 +1,28 @@
 <template>
   <div class="min-h-screen bg-gray-50">
-    <TopNavbar />
+    <Navbar v-if="isAuthenticated" />
     <router-view></router-view>
   </div>
 </template>
 
 <script>
-import TopNavbar from './components/Navbar.vue'
+import { mapGetters, mapActions } from 'vuex'
+import Navbar from './components/Navbar.vue'
 
 export default {
   name: 'App',
   components: {
-    TopNavbar
+    Navbar
+  },
+  computed: {
+    ...mapGetters(['isAuthenticated'])
+  },
+  methods: {
+    ...mapActions(['initializeStore'])
+  },
+  created() {
+    // Uygulama başlatıldığında store'u initialize et
+    this.initializeStore();
   }
 }
 </script>

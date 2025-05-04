@@ -3,7 +3,7 @@
     <div class="sm:mx-auto sm:w-full sm:max-w-md">
       <img src="../assets/akdeniz.png" alt="Akdeniz Üniversitesi Logo" class="mx-auto h-16 w-auto">
       <h2 class="mt-6 text-center text-3xl font-extrabold text-gray-900">
-        Kampüs Sorun Takip Sistemi
+        {{$t('appTitle')}}
       </h2>
       <p class="mt-2 text-center text-sm text-gray-600">
         Hesabınıza giriş yapın
@@ -13,21 +13,23 @@
     <div class="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
       <div class="bg-white py-8 px-4 shadow-lg rounded-xl sm:px-10">
         <div v-if="loginError" class="mb-4 p-4 text-sm text-red-700 bg-red-100 rounded-lg" role="alert">
-          {{ loginError }}
+          {{ loginError === 'Geçersiz kullanıcı bilgileri veya yetkisiz erişim.' ? 'Geçersiz kullanıcı bilgileri veya yetkisiz erişim. Sadece departman personeli giriş yapabilir.' : loginError }}
         </div>
 
         <form class="space-y-6" @submit.prevent="handleLogin">
           <div>
-            <label for="username" class="block text-sm font-medium text-gray-700">
-              Kullanıcı Adı
+            <label for="email" class="block text-sm font-medium text-gray-700">
+              E-posta
             </label>
             <div class="mt-1">
               <input
-                id="username"
+                id="email"
                 v-model="username"
-                name="username"
-                type="text"
+                name="email"
+                type="email"
+                autocomplete="email"
                 required
+                placeholder="ornek@akdeniz.edu.tr"
                 class="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm transition-all duration-200"
               />
             </div>
@@ -80,7 +82,7 @@
                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                 <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
               </svg>
-              {{ loading ? 'Giriş yapılıyor...' : 'Giriş Yap' }}
+              {{ loading ? $t('login') + '...' : $t('login') }}
             </button>
           </div>
         </form>
@@ -102,7 +104,7 @@
               @click="goToRegister"
               class="w-full flex justify-center py-2 px-4 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200"
             >
-              Kayıt Ol
+              {{$t('register')}}
             </button>
           </div>
         </div>
